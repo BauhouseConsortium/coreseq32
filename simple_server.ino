@@ -16,7 +16,7 @@
 #include <ESPAsyncWebServer.h>
 #include <SPIFFS.h>
 #include <ArduinoJson.h>
-
+#include "AsyncJson.h"
 AsyncWebServer server(80);
 
 const char *ssid = "MANTICORE32";
@@ -93,10 +93,7 @@ void setup()
     //     digitalWrite(RELAY_PINS[i], HIGH);  // Turn off all relays initially
     // }
 
-    for (int i = 0; i < NUM_PATTERNS; i++)
-    {
-        loadPatternFromFile(i);
-    }
+
 
     Serial.print("IP Address: ");
     Serial.println(WiFi.softAPIP());
@@ -106,7 +103,11 @@ void setup()
         Serial.println("An error occurred while mounting SPIFFS");
         return;
     }
-
+    for (int i = 0; i < NUM_PATTERNS; i++)
+    {
+        loadPatternFromFile(i);
+    }
+    
     server.serveStatic("/", SPIFFS, "/").setDefaultFile("index.html");
     server.serveStatic("/static/", SPIFFS, "/static/");
 
@@ -120,57 +121,18 @@ void loop()
 {
 }
 
-void attachRoutes()
-{
-    Serial.println("Router");
-    //   server.enableCORS(false);  // Disable automatic CORS handling
-    // server.on("/setPattern", HTTP_OPTIONS, [](AsyncWebServerRequest *request)
-    //           {
-    // // request->header("Access-Control-Allow-Origin", "http://localhost:5173");
-    // // request->header("Access-Control-Allow-Methods", "POST, OPTIONS");
-    // // request->header("Access-Control-Allow-Headers", "Content-Type");
-    // // request->header("Access-Control-Max-Age", "86400");
-    // request->send(204); });
-    server.on("/setPattern", HTTP_POST, handleSetPattern);
-    server.on("/getPatterns", HTTP_GET, handleGetPatterns);
-    server.on("/triggerAllRelays", HTTP_POST, handleTriggerAllRelays);
-    server.on("/pause", HTTP_POST, handlePause);
-    server.on("/setTiming", HTTP_POST, handleSetTiming);
-    server.on("/lockPattern", HTTP_POST, handleLockPattern); // Add lock pattern endpoint
-    // server.on("/lockPattern", HTTP_OPTIONS, [](AsyncWebServerRequest *request)
-    //           {
-    // // request->header("Access-Control-Allow-Origin", "http://localhost:5173");
-    // // request->header("Access-Control-Allow-Methods", "POST, OPTIONS");
-    // // request->header("Access-Control-Allow-Headers", "Content-Type");
-    // // request->header("Access-Control-Max-Age", "86400");
-    // request->send(204); });
-}
 
-void handleSetPattern(AsyncWebServerRequest *request)
-{
-    if (!request->hasParam("plain", true))
-    {
-        request->send(400, "text/plain", "Body not received");
-        return;
-    }
 
-    String body = request->getParam("plain", true)->value();
-    DynamicJsonDocument doc(1024);
-    DeserializationError error = deserializeJson(doc, body);
+AsyncCallbackJsonWebHandler* setPatternHandler = new AsyncCallbackJsonWebHandler("/setPattern", [](AsyncWebServerRequest *request, JsonVariant &json) {
+    JsonObject jsonObj = json.as<JsonObject>();
 
-    if (error)
-    {
-        request->send(400, "text/plain", "Invalid JSON");
-        return;
-    }
-
-    if (!doc.containsKey("patternIndex"))
+    if (!jsonObj.containsKey("patternIndex"))
     {
         request->send(400, "text/plain", "Missing patternIndex");
         return;
     }
 
-    int patternIndex = doc["patternIndex"];
+    int patternIndex = jsonObj["patternIndex"];
 
     if (patternIndex < 0 || patternIndex >= NUM_PATTERNS)
     {
@@ -178,13 +140,13 @@ void handleSetPattern(AsyncWebServerRequest *request)
         return;
     }
 
-    if (!doc.containsKey("patternData"))
+    if (!jsonObj.containsKey("patternData"))
     {
         request->send(400, "text/plain", "Missing patternData");
         return;
     }
 
-    JsonArray patternData = doc["patternData"].as<JsonArray>();
+    JsonArray patternData = jsonObj["patternData"].as<JsonArray>();
 
     if (patternData.size() != NUM_RELAYS * NUM_STEPS)
     {
@@ -212,7 +174,7 @@ void handleSetPattern(AsyncWebServerRequest *request)
     currentStep = 0; // Reset the current step to 0
     relayOn = false; // Ensure all relays are turned off
     request->send(200, "text/plain", "Pattern set successfully");
-}
+});
 
 void handleGetPatterns(AsyncWebServerRequest *request)
 {
@@ -451,4 +413,33 @@ void loadPatternFromFile(int patternIndex)
     // Close the file
     file.close();
     Serial.println("Pattern loaded from CSV file successfully");
+
+}
+
+
+void attachRoutes()
+{
+    Serial.println("Router");
+    //   server.enableCORS(false);  // Disable automatic CORS handling
+    // server.on("/setPattern", HTTP_OPTIONS, [](AsyncWebServerRequest *request)
+    //           {
+    // // request->header("Access-Control-Allow-Origin", "http://localhost:5173");
+    // // request->header("Access-Control-Allow-Methods", "POST, OPTIONS");
+    // // request->header("Access-Control-Allow-Headers", "Content-Type");
+    // // request->header("Access-Control-Max-Age", "86400");
+    // request->send(204); });
+    // server.on("/setPattern", HTTP_POST, setPatternHandler);
+    server.addHandler(setPatternHandler);
+    server.on("/getPatterns", HTTP_GET, handleGetPatterns);
+    server.on("/triggerAllRelays", HTTP_POST, handleTriggerAllRelays);
+    server.on("/pause", HTTP_POST, handlePause);
+    server.on("/setTiming", HTTP_POST, handleSetTiming);
+    server.on("/lockPattern", HTTP_POST, handleLockPattern); // Add lock pattern endpoint
+    // server.on("/lockPattern", HTTP_OPTIONS, [](AsyncWebServerRequest *request)
+    //           {
+    // // request->header("Access-Control-Allow-Origin", "http://localhost:5173");
+    // // request->header("Access-Control-Allow-Methods", "POST, OPTIONS");
+    // // request->header("Access-Control-Allow-Headers", "Content-Type");
+    // // request->header("Access-Control-Max-Age", "86400");
+    // request->send(204); });
 }

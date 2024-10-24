@@ -70,7 +70,7 @@ const int SOLENOID_PINS[NUM_SOLENOIDS] = {2, 3, 4, 5, 6, 7, 8, 9};  // Pins conn
 int solenoid_lengths[NUM_SOLENOIDS];
 volatile uint8_t activePattern = 0;
 
-int baseStepDuration = 300; // Base duration of each step in milliseconds
+int baseStepDuration = 120; // Base duration of each step in milliseconds
 int swingAmount = 30;       // Amount of swing in milliseconds
 int relayOnTime = 50;       // Duration the relay stays ON within each step
 String sequenceName = "Default";
@@ -195,7 +195,7 @@ void setup()
     uClock.setOnClockStop(onClockStop);
     
     // Set the clock BPM
-    uClock.setTempo(126);
+    uClock.setTempo(baseStepDuration);
 
     // Load the initial pattern into the sequencer
     loadPatternData(activePattern);

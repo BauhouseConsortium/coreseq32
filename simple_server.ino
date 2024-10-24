@@ -197,9 +197,10 @@ void handleGetPatterns(AsyncWebServerRequest *request)
 
         for (int relay = 0; relay < NUM_RELAYS; relay++)
         {
+            JsonArray relayData = patternData.createNestedArray();
             for (int step = 0; step < NUM_STEPS; step++)
             {
-                patternData.add(patterns[i][relay][step]);
+                relayData.add(patterns[i][relay][step]);
             }
         }
     }

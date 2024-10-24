@@ -260,6 +260,11 @@ void handleSetTiming(AsyncWebServerRequest *request)
     {
         isPaused = doc["isPaused"].as<bool>();
         updated = true;
+        if (isPaused) {
+            uClock.stop();
+        } else {
+            uClock.start();
+        }
     }
 
     if (updated)

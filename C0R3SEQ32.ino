@@ -202,7 +202,9 @@ void setupClock() {
     loadPatternData(activePattern);
 
     // Start the sequencer
-    uClock.start();
+    if (!isPaused) {
+        uClock.start();
+    }
 }
 
 void setup() {

@@ -141,8 +141,8 @@ void saveTimingToFile()
     File file = SPIFFS.open("/timing_params.csv", FILE_WRITE);
     if (file)
     {
-        file.println("baseStepDuration,swingAmount,relayOnTime,sequenceName");
-        file.printf("%d,%d,%d,%s\n", baseStepDuration, swingAmount, relayOnTime, sequenceName.c_str());
+        file.println("baseStepDuration,swingAmount,relayOnTime,sequenceName,isPaused");
+        file.printf("%d,%d,%d,%s,%d\n", baseStepDuration, swingAmount, relayOnTime, sequenceName.c_str(), isPaused);
         file.close();
         Serial.println("Timing parameters saved successfully");
     }
@@ -158,7 +158,32 @@ void loadTimingFromFile()
     File file = SPIFFS.open("/timing_params.csv", FILE_READ);
     if (!file)
     {
-        Serial.println("Failed to open timing_params.csv");
+        Serial.println("Creating default timing_params.csv");
+        
+        // Create file with default values
+        File newFile = SPIFFS.open("/timing_params.csv", FILE_WRITE);
+        if (newFile) {
+            const int defaultBaseStepDuration = baseStepDuration;
+            const int defaultSwingAmount = swingAmount;
+            const int defaultRelayOnTime = relayOnTime;
+            const char* defaultSequenceName = sequenceName.c_str();
+            const bool defaultIsPaused = isPaused;
+
+            newFile.println("baseStepDuration,swingAmount,relayOnTime,sequenceName,isPaused");
+            newFile.printf("%d,%d,%d,%s,%d\n", defaultBaseStepDuration, defaultSwingAmount, defaultRelayOnTime, defaultSequenceName, isPaused);
+            newFile.close();
+            
+            // Set default values
+            baseStepDuration = defaultBaseStepDuration;
+            swingAmount = defaultSwingAmount;
+            relayOnTime = defaultRelayOnTime;
+            sequenceName = defaultSequenceName;
+            isPaused = defaultIsPaused;
+
+            Serial.println("Default timing parameters created");
+        } else {
+            Serial.println("Failed to create timing_params.csv");
+        }
         return;
     }
 
@@ -170,22 +195,26 @@ void loadTimingFromFile()
     int commaIndex1 = line.indexOf(',');
     int commaIndex2 = line.indexOf(',', commaIndex1 + 1);
     int commaIndex3 = line.indexOf(',', commaIndex2 + 1);
+    int commaIndex4 = line.indexOf(',', commaIndex3 + 1);
 
-    if (commaIndex1 != -1 && commaIndex2 != -1 && commaIndex3 != -1)
+    if (commaIndex1 != -1 && commaIndex2 != -1 && commaIndex3 != -1 && commaIndex4 != -1)
     {
         baseStepDuration = line.substring(0, commaIndex1).toInt();
         swingAmount = line.substring(commaIndex1 + 1, commaIndex2).toInt();
         relayOnTime = line.substring(commaIndex2 + 1, commaIndex3).toInt();
         sequenceName = line.substring(commaIndex3 + 1);
+        sequenceName.trim(); // Remove any trailing whitespace
+        isPaused = line.substring(commaIndex4 + 1).toInt();
         Serial.println("Timing parameters loaded successfully");
     }
     else
     {
         Serial.println("Invalid format in timing_params.csv");
     }
-
     file.close();
 }
+
+
 void handleSetTiming(AsyncWebServerRequest *request)
 {
     if (!request->hasParam("plain", true))
@@ -225,6 +254,11 @@ void handleSetTiming(AsyncWebServerRequest *request)
     if (doc.containsKey("sequenceName"))
     {
         sequenceName = doc["sequenceName"].as<String>();
+        updated = true;
+    }
+    if (doc.containsKey("isPaused"))
+    {
+        isPaused = doc["isPaused"].as<bool>();
         updated = true;
     }
 
@@ -385,6 +419,7 @@ void handleGetSettings(AsyncWebServerRequest *request) {
     doc["swing"] = swingAmount;
     doc["velocity"] = relayOnTime;
     doc["sequenceName"] = sequenceName;
+    doc["isPaused"] = isPaused;
     String response;
     serializeJson(doc, response);
     request->send(200, "application/json", response);

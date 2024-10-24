@@ -104,6 +104,7 @@ byte patterns[NUM_PATTERNS][NUM_RELAYS][NUM_STEPS] = {
 int baseStepDuration = 300; // Base duration of each step in milliseconds
 int swingAmount = 30;       // Amount of swing in milliseconds
 int relayOnTime = 50;       // Duration the relay stays ON within each step
+String sequenceName = "Default";
 
 int currentPattern = 0;
 int currentStep = 0;
@@ -316,8 +317,8 @@ void saveTimingToFile()
     File file = SPIFFS.open("/timing_params.csv", FILE_WRITE);
     if (file)
     {
-        file.println("baseStepDuration,swingAmount,relayOnTime");
-        file.printf("%d,%d,%d\n", baseStepDuration, swingAmount, relayOnTime);
+        file.println("baseStepDuration,swingAmount,relayOnTime,sequenceName");
+        file.printf("%d,%d,%d,%s\n", baseStepDuration, swingAmount, relayOnTime, sequenceName.c_str());
         file.close();
         Serial.println("Timing parameters saved successfully");
     }
@@ -344,12 +345,14 @@ void loadTimingFromFile()
     String line = file.readStringUntil('\n');
     int commaIndex1 = line.indexOf(',');
     int commaIndex2 = line.indexOf(',', commaIndex1 + 1);
+    int commaIndex3 = line.indexOf(',', commaIndex2 + 1);
 
-    if (commaIndex1 != -1 && commaIndex2 != -1)
+    if (commaIndex1 != -1 && commaIndex2 != -1 && commaIndex3 != -1)
     {
         baseStepDuration = line.substring(0, commaIndex1).toInt();
         swingAmount = line.substring(commaIndex1 + 1, commaIndex2).toInt();
-        relayOnTime = line.substring(commaIndex2 + 1).toInt();
+        relayOnTime = line.substring(commaIndex2 + 1, commaIndex3).toInt();
+        sequenceName = line.substring(commaIndex3 + 1);
         Serial.println("Timing parameters loaded successfully");
     }
     else
@@ -359,7 +362,6 @@ void loadTimingFromFile()
 
     file.close();
 }
-
 void handleSetTiming(AsyncWebServerRequest *request)
 {
     if (!request->hasParam("plain", true))
@@ -393,6 +395,11 @@ void handleSetTiming(AsyncWebServerRequest *request)
     if (doc.containsKey("relayOnTime"))
     {
         relayOnTime = doc["relayOnTime"];
+        updated = true;
+    }
+    if (doc.containsKey("sequenceName"))
+    {
+        sequenceName = doc["sequenceName"].as<String>();
         updated = true;
     }
 
@@ -551,7 +558,7 @@ void handleGetSettings(AsyncWebServerRequest *request) {
     doc["tempo"] = baseStepDuration;
     doc["swing"] = swingAmount;
     doc["velocity"] = relayOnTime;
-
+    doc["sequenceName"] = sequenceName;
     String response;
     serializeJson(doc, response);
     request->send(200, "application/json", response);

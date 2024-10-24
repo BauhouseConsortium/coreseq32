@@ -127,11 +127,7 @@ byte patterns[NUM_PATTERNS][NUM_RELAYS][NUM_STEPS] = {
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}  // RELAY8 pattern
     }};
 
-
-void setup()
-{
-    Serial.begin(115200);
-
+void setupWiFi() {
     // Scan for existing networks
     int n = WiFi.scanNetworks();
     bool mainNetworkFound = false;
@@ -160,34 +156,37 @@ void setup()
         Serial.print("AP IP Address: ");
         Serial.println(WiFi.softAPIP());
     }
+}
 
-    if (!SPIFFS.begin(true))
-    {
+void setupFileSystem() {
+    if (!SPIFFS.begin(true)) {
         Serial.println("An error occurred while mounting SPIFFS");
         return;
     }
-    for (int i = 0; i < NUM_PATTERNS; i++)
-    {
+    
+    for (int i = 0; i < NUM_PATTERNS; i++) {
         loadPatternFromFile(i);
     }
-
     loadTimingFromFile();
-    
+}
+
+void setupWebServer() {
     server.serveStatic("/", SPIFFS, "/").setDefaultFile("index.html");
     server.serveStatic("/static/", SPIFFS, "/static/");
-
     server.onNotFound(notFound);
     attachRoutes();
-
     server.begin();
+}
 
+void setupSolenoids() {
     for (int i = 0; i < NUM_SOLENOIDS; i++) {
         pinMode(SOLENOID_PINS[i], OUTPUT);
         digitalWrite(SOLENOID_PINS[i], LOW);
         solenoid_lengths[i] = -1;
     }
+}
 
-    // Initialize the clock
+void setupClock() {
     uClock.init();
     
     // Set the callback functions
@@ -204,6 +203,15 @@ void setup()
 
     // Start the sequencer
     uClock.start();
+}
+
+void setup() {
+    Serial.begin(115200);
+    setupWiFi();
+    setupFileSystem();
+    setupWebServer();
+    setupSolenoids();
+    setupClock();
 }
 
 void loop()

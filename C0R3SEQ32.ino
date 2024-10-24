@@ -2,10 +2,12 @@
 // C0R3SEQ32: A Sequencer Server for ESP32
 //
 // This program implements a web server on ESP32 that:
-//  * Controls 8 relays in sequenced patterns
-//  * Serves a web interface for pattern editing
+//  * Controls 8 relays in sequenced patterns using uClock for precise timing
+//  * Uses uClock's 96 PPQN (Pulses Per Quarter Note) resolution for accurate timing
+//  * Serves a web interface for pattern editing built with React and shadcn/ui
 //  * Handles API requests for pattern manipulation
 //  * Stores patterns in SPIFFS for persistence
+//  * Supports tempo control and swing timing via uClock integration
 //
 // Author: Budi Prakosa (aka manticore)
 // License: MIT License

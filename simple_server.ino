@@ -19,14 +19,26 @@
 #include "AsyncJson.h"
 AsyncWebServer server(80);
 
-const char *ssid = "MANTICORE32";
-const char *password = "12345678";
-
 #define NUM_RELAYS 8
 #define NUM_STEPS 16
 #define NUM_PATTERNS 3
 
-const byte RELAY_PINS[NUM_RELAYS] = {14, 11, 16, 2, 15, 12, 13, 10}; // RELAY1, RELAY2, RELAY3, RELAY4
+#define RELAY_PIN_1 14
+#define RELAY_PIN_2 11
+#define RELAY_PIN_3 16
+#define RELAY_PIN_4 2
+#define RELAY_PIN_5 15
+#define RELAY_PIN_6 12
+#define RELAY_PIN_7 13
+#define RELAY_PIN_8 10
+
+#define WIFI_SSID "MANTICORE32"
+#define WIFI_PASSWORD "12345678"
+
+const char *ssid = WIFI_SSID;
+const char *password = WIFI_PASSWORD;
+
+const byte RELAY_PINS[NUM_RELAYS] = {RELAY_PIN_1, RELAY_PIN_2, RELAY_PIN_3, RELAY_PIN_4, RELAY_PIN_5, RELAY_PIN_6, RELAY_PIN_7, RELAY_PIN_8};
 
 // Define multiple patterns for each relay (0 = OFF, 1 = ON)
 byte patterns[NUM_PATTERNS][NUM_RELAYS][NUM_STEPS] = {
@@ -107,6 +119,8 @@ void setup()
     {
         loadPatternFromFile(i);
     }
+
+    loadTimingFromFile();
     
     server.serveStatic("/", SPIFFS, "/").setDefaultFile("index.html");
     server.serveStatic("/static/", SPIFFS, "/static/");
@@ -116,12 +130,6 @@ void setup()
 
     server.begin();
 }
-
-void loop()
-{
-}
-
-
 
 AsyncCallbackJsonWebHandler* setPatternHandler = new AsyncCallbackJsonWebHandler("/setPattern", [](AsyncWebServerRequest *request, JsonVariant &json) {
     JsonObject jsonObj = json.as<JsonObject>();
@@ -260,6 +268,55 @@ void handlePause(AsyncWebServerRequest *request)
     request->send(200, "text/plain", isPaused ? "Sequencer paused" : "Sequencer resumed");
 }
 
+void saveTimingToFile()
+{
+    File file = SPIFFS.open("/timing_params.csv", FILE_WRITE);
+    if (file)
+    {
+        file.println("baseStepDuration,swingAmount,relayOnTime");
+        file.printf("%d,%d,%d\n", baseStepDuration, swingAmount, relayOnTime);
+        file.close();
+        Serial.println("Timing parameters saved successfully");
+    }
+    else
+    {
+        Serial.println("Failed to save timing parameters");
+    }
+}
+
+
+void loadTimingFromFile()
+{
+    File file = SPIFFS.open("/timing_params.csv", FILE_READ);
+    if (!file)
+    {
+        Serial.println("Failed to open timing_params.csv");
+        return;
+    }
+
+    // Skip the header line
+    file.readStringUntil('\n');
+
+    // Read the values
+    String line = file.readStringUntil('\n');
+    int commaIndex1 = line.indexOf(',');
+    int commaIndex2 = line.indexOf(',', commaIndex1 + 1);
+
+    if (commaIndex1 != -1 && commaIndex2 != -1)
+    {
+        baseStepDuration = line.substring(0, commaIndex1).toInt();
+        swingAmount = line.substring(commaIndex1 + 1, commaIndex2).toInt();
+        relayOnTime = line.substring(commaIndex2 + 1).toInt();
+        Serial.println("Timing parameters loaded successfully");
+    }
+    else
+    {
+        Serial.println("Invalid format in timing_params.csv");
+    }
+
+    file.close();
+}
+
 void handleSetTiming(AsyncWebServerRequest *request)
 {
     if (!request->hasParam("plain", true))
@@ -278,21 +335,35 @@ void handleSetTiming(AsyncWebServerRequest *request)
         return;
     }
 
+    bool updated = false;
+
     if (doc.containsKey("baseStepDuration"))
     {
         baseStepDuration = doc["baseStepDuration"];
+        updated = true;
     }
     if (doc.containsKey("swingAmount"))
     {
         swingAmount = doc["swingAmount"];
+        updated = true;
     }
     if (doc.containsKey("relayOnTime"))
     {
         relayOnTime = doc["relayOnTime"];
+        updated = true;
     }
 
-    request->send(200, "text/plain", "Timing parameters updated successfully");
+    if (updated)
+    {
+        saveTimingToFile();
+        request->send(200, "text/plain", "Timing parameters updated and saved successfully");
+    }
+    else
+    {
+        request->send(200, "text/plain", "No timing parameters were updated");
+    }
 }
+
 
 void handleLockPattern(AsyncWebServerRequest *request)
 {
@@ -442,4 +513,8 @@ void attachRoutes()
     // // request->header("Access-Control-Allow-Headers", "Content-Type");
     // // request->header("Access-Control-Max-Age", "86400");
     // request->send(204); });
+}
+
+void loop()
+{
 }

@@ -530,32 +530,15 @@ void loadPatternFromFile(int patternIndex)
 
 }
 
-
 void attachRoutes()
 {
     Serial.println("Router");
-    //   server.enableCORS(false);  // Disable automatic CORS handling
-    // server.on("/setPattern", HTTP_OPTIONS, [](AsyncWebServerRequest *request)
-    //           {
-    // // request->header("Access-Control-Allow-Origin", "http://localhost:5173");
-    // // request->header("Access-Control-Allow-Methods", "POST, OPTIONS");
-    // // request->header("Access-Control-Allow-Headers", "Content-Type");
-    // // request->header("Access-Control-Max-Age", "86400");
-    // request->send(204); });
-    // server.on("/setPattern", HTTP_POST, setPatternHandler);
     server.addHandler(setPatternHandler);
     server.on("/getPatterns", HTTP_GET, handleGetPatterns);
     server.on("/triggerAllRelays", HTTP_POST, handleTriggerAllRelays);
     server.on("/pause", HTTP_POST, handlePause);
     server.on("/setTiming", HTTP_POST, handleSetTiming);
     server.on("/lockPattern", HTTP_POST, handleLockPattern); // Add lock pattern endpoint
-    // server.on("/lockPattern", HTTP_OPTIONS, [](AsyncWebServerRequest *request)
-    //           {
-    // // request->header("Access-Control-Allow-Origin", "http://localhost:5173");
-    // // request->header("Access-Control-Allow-Methods", "POST, OPTIONS");
-    // // request->header("Access-Control-Allow-Headers", "Content-Type");
-    // // request->header("Access-Control-Max-Age", "86400");
-    // request->send(204); });
 }
 
 void loop()

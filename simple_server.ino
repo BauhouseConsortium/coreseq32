@@ -540,7 +540,7 @@ void loadPatternFromFile(int patternIndex)
 AsyncCallbackJsonWebHandler* setSettingsHandler = new AsyncCallbackJsonWebHandler("/setSettings", [](AsyncWebServerRequest *request, JsonVariant &json) {
     JsonObject jsonObj = json.as<JsonObject>();
 
-    if (!jsonObj.containsKey("tempo") || !jsonObj.containsKey("swing") || !jsonObj.containsKey("velocity")) {
+    if (!jsonObj.containsKey("tempo") || !jsonObj.containsKey("swing") || !jsonObj.containsKey("velocity") || !jsonObj.containsKey("sequenceName")) {
         request->send(400, "text/plain", "Missing required timing parameters");
         return;
     }
@@ -548,6 +548,7 @@ AsyncCallbackJsonWebHandler* setSettingsHandler = new AsyncCallbackJsonWebHandle
     baseStepDuration = jsonObj["tempo"];
     swingAmount = jsonObj["swing"];
     relayOnTime = jsonObj["velocity"];
+    sequenceName = jsonObj["sequenceName"].as<String>();
 
     saveTimingToFile();
     request->send(200, "text/plain", "Timing settings updated successfully");

@@ -32,7 +32,7 @@ AsyncWebServer server(80);
 #define RELAY_PIN_7 13
 #define RELAY_PIN_8 10
 
-#define WIFI_SSID "MANTICORE32"
+#define WIFI_SSID "C0R3SEQ32"
 #define WIFI_PASSWORD "12345678"
 
 const char *ssid = WIFI_SSID;
@@ -96,19 +96,36 @@ void notFound(AsyncWebServerRequest *request)
 
 void setup()
 {
-
     Serial.begin(115200);
-    WiFi.softAP(ssid, password);
 
-    // for (int i = 0; i < NUM_RELAYS; i++) {
-    //     pinMode(RELAY_PINS[i], OUTPUT);
-    //     digitalWrite(RELAY_PINS[i], HIGH);  // Turn off all relays initially
-    // }
+    // Scan for existing networks
+    int n = WiFi.scanNetworks();
+    bool mainNetworkFound = false;
 
+    for (int i = 0; i < n; ++i) {
+        if (WiFi.SSID(i) == "CORESEQMAIN") {
+            mainNetworkFound = true;
+            break;
+        }
+    }
 
-
-    Serial.print("IP Address: ");
-    Serial.println(WiFi.softAPIP());
+    if (mainNetworkFound) {
+        // Connect to the main network
+        WiFi.begin("CORESEQMAIN", "password"); // Replace "password" with the actual password
+        while (WiFi.status() != WL_CONNECTED) {
+            delay(500);
+            Serial.print(".");
+        }
+        Serial.println("\nConnected to CORESEQMAIN");
+        Serial.print("IP Address: ");
+        Serial.println(WiFi.localIP());
+    } else {
+        // Act as the main network
+        WiFi.softAP("CORESEQMAIN", "password"); // Replace "password" with a secure password
+        Serial.println("Acting as main network CORESEQMAIN");
+        Serial.print("AP IP Address: ");
+        Serial.println(WiFi.softAPIP());
+    }
 
     if (!SPIFFS.begin(true))
     {

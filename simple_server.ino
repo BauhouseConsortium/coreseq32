@@ -530,10 +530,40 @@ void loadPatternFromFile(int patternIndex)
 
 }
 
+AsyncCallbackJsonWebHandler* setSettingsHandler = new AsyncCallbackJsonWebHandler("/setSettings", [](AsyncWebServerRequest *request, JsonVariant &json) {
+    JsonObject jsonObj = json.as<JsonObject>();
+
+    if (!jsonObj.containsKey("tempo") || !jsonObj.containsKey("swing") || !jsonObj.containsKey("velocity")) {
+        request->send(400, "text/plain", "Missing required timing parameters");
+        return;
+    }
+
+    baseStepDuration = jsonObj["tempo"];
+    swingAmount = jsonObj["swing"];
+    relayOnTime = jsonObj["velocity"];
+
+    saveTimingToFile();
+    request->send(200, "text/plain", "Timing settings updated successfully");
+});
+
+void handleGetSettings(AsyncWebServerRequest *request) {
+    StaticJsonDocument<200> doc;
+    doc["tempo"] = baseStepDuration;
+    doc["swing"] = swingAmount;
+    doc["velocity"] = relayOnTime;
+
+    String response;
+    serializeJson(doc, response);
+    request->send(200, "application/json", response);
+}
+
+
 void attachRoutes()
 {
     Serial.println("Router");
     server.addHandler(setPatternHandler);
+    server.addHandler(setSettingsHandler);
+    server.on("/getSettings", HTTP_GET, handleGetSettings);
     server.on("/getPatterns", HTTP_GET, handleGetPatterns);
     server.on("/triggerAllRelays", HTTP_POST, handleTriggerAllRelays);
     server.on("/pause", HTTP_POST, handlePause);

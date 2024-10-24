@@ -126,12 +126,11 @@ void handlePause(AsyncWebServerRequest *request)
 
     if (isPaused)
     {
-        // Turn off all relays when paused
-        for (int i = 0; i < NUM_RELAYS; i++)
-        {
-            digitalWrite(RELAY_PINS[i], HIGH);
-        }
-        relayOn = false;
+        uClock.stop();
+    }
+    else
+    {
+        uClock.start();
     }
 
     request->send(200, "text/plain", isPaused ? "Sequencer paused" : "Sequencer resumed");
@@ -210,6 +209,7 @@ void handleSetTiming(AsyncWebServerRequest *request)
     if (doc.containsKey("baseStepDuration"))
     {
         baseStepDuration = doc["baseStepDuration"];
+        uClock.setTempo(baseStepDuration);
         updated = true;
     }
     if (doc.containsKey("swingAmount"))

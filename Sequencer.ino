@@ -16,7 +16,7 @@ uint16_t _step = 0;
 // Sequencer data structure
 typedef struct
 {
-  uint8_t solenoidStates;  // Each bit represents the state of a solenoid in this step (bit 0 for solenoid 0, bit 1 for solenoid 1, etc.)
+  uint16_t solenoidStates;  // Each bit represents the state of a solenoid in this step (bit 0 for solenoid 0, bit 1 for solenoid 1, etc.)
   bool rest;               // If true, no solenoids are activated during this step
 } SEQUENCER_STEP_DATA;
 
@@ -31,7 +31,7 @@ uint16_t _step_length = STEP_MAX_SIZE;
 void loadPatternData(uint8_t patternIndex) {
   ATOMIC(
     for (uint16_t step = 0; step < STEP_MAX_SIZE; step++) {
-      uint8_t solenoidStates = 0;
+      uint16_t solenoidStates = 0;
       for (int solenoid = 0; solenoid < NUM_SOLENOIDS; solenoid++) {
         if (patterns[patternIndex][solenoid][step] == 1) {
           solenoidStates |= (1 << solenoid);
@@ -70,7 +70,7 @@ void onStepCallback(uint32_t tick)
 
   // Activate the solenoids if this step is not a rest
   if (!_sequencer[_step].rest) {
-    uint8_t solenoidStates = _sequencer[_step].solenoidStates;
+    uint16_t solenoidStates = _sequencer[_step].solenoidStates;
 
     for (int i = 0; i < NUM_SOLENOIDS; i++) {
       if (solenoidStates & (1 << i)) {

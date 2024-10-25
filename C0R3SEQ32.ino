@@ -47,13 +47,13 @@
 #include <uClock.h>
 
 AsyncWebServer server(80);
-#define NUM_RELAYS 8
+#define NUM_RELAYS 16
 #define NUM_STEPS 16
 #define NUM_PATTERNS 3
 
 #define STEP_MAX_SIZE    16  // Number of steps in a pattern
 // #define NOTE_LENGTH      12  // Adjust as needed
-#define NUM_SOLENOIDS    8   // Number of solenoids (relays)
+#define NUM_SOLENOIDS    16   // Number of solenoids (relays)
 #define NUM_PATTERNS     3   // Number of patterns
 
 #define RELAY_PIN_1 14
@@ -64,12 +64,20 @@ AsyncWebServer server(80);
 #define RELAY_PIN_6 12
 #define RELAY_PIN_7 13
 #define RELAY_PIN_8 10
+#define RELAY_PIN_9 9
+#define RELAY_PIN_10 8
+#define RELAY_PIN_11 7
+#define RELAY_PIN_12 6
+#define RELAY_PIN_13 5
+#define RELAY_PIN_14 4
+#define RELAY_PIN_15 3
+#define RELAY_PIN_16 1
 
 #define WIFI_SSID "C0R3SEQ32"
 #define WIFI_PASSWORD "12345678"
 
-int SOLENOID_PINS[NUM_SOLENOIDS] = {-1, -1, -1, -1, -1, -1, -1, -1};  // Pins connected to the solenoids
-int relayActiveStates[NUM_SOLENOIDS] = {0, 0, 0, 0, 0, 0, 0, 0};
+int SOLENOID_PINS[NUM_SOLENOIDS] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};  // Pins connected to the solenoids
+int relayActiveStates[NUM_SOLENOIDS] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 int NOTE_LENGTH = 12;
 
 int solenoid_lengths[NUM_SOLENOIDS];
@@ -92,7 +100,7 @@ bool isPatternLocked = false; // Flag to indicate if pattern is locked
 const char *ssid = WIFI_SSID;
 const char *password = WIFI_PASSWORD;
 
-const byte RELAY_PINS[NUM_RELAYS] = {RELAY_PIN_1, RELAY_PIN_2, RELAY_PIN_3, RELAY_PIN_4, RELAY_PIN_5, RELAY_PIN_6, RELAY_PIN_7, RELAY_PIN_8};
+const byte RELAY_PINS[NUM_RELAYS] = {RELAY_PIN_1, RELAY_PIN_2, RELAY_PIN_3, RELAY_PIN_4, RELAY_PIN_5, RELAY_PIN_6, RELAY_PIN_7, RELAY_PIN_8, RELAY_PIN_9, RELAY_PIN_10, RELAY_PIN_11, RELAY_PIN_12, RELAY_PIN_13, RELAY_PIN_14, RELAY_PIN_15, RELAY_PIN_16};
 
 // Define multiple patterns for each relay (0 = OFF, 1 = ON)
 byte patterns[NUM_PATTERNS][NUM_RELAYS][NUM_STEPS] = {
@@ -105,7 +113,15 @@ byte patterns[NUM_PATTERNS][NUM_RELAYS][NUM_STEPS] = {
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY5 pattern
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY6 pattern
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY7 pattern
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}  // RELAY8 pattern
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY8 pattern
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY9 pattern
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY10 pattern
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY11 pattern
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY12 pattern
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY13 pattern
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY14 pattern
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY15 pattern
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}  // RELAY16 pattern
     },
     {
         // Pattern 2
@@ -116,7 +132,15 @@ byte patterns[NUM_PATTERNS][NUM_RELAYS][NUM_STEPS] = {
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY5 pattern
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY6 pattern
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY7 pattern
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}  // RELAY8 pattern
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY8 pattern
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY9 pattern
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY10 pattern
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY11 pattern
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY12 pattern
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY13 pattern
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY14 pattern
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY15 pattern
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}  // RELAY16 pattern
     },
     {
         // Pattern 3
@@ -127,7 +151,15 @@ byte patterns[NUM_PATTERNS][NUM_RELAYS][NUM_STEPS] = {
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY5 pattern
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY6 pattern
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY7 pattern
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}  // RELAY8 pattern
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY8 pattern
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY9 pattern
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY10 pattern
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY11 pattern
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY12 pattern
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY13 pattern
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY14 pattern
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY15 pattern
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}  // RELAY16 pattern
     }};
 
 void setupWiFi() {

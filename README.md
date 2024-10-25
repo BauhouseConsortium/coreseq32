@@ -1,5 +1,12 @@
 # C0R3SEQ32
 
+## Install ESP32 Platform
+
+1. Open Arduino IDE
+2. Go to `File` > `Preferences`
+3. Add the following URL to the `Additional Boards Manager URLs` field:
+   - `https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json`
+
 ## Installation
 
 1. **Navigate to the Tools Directory**:

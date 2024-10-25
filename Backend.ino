@@ -413,6 +413,7 @@ AsyncCallbackJsonWebHandler* setSettingsHandler = new AsyncCallbackJsonWebHandle
     swingAmount = jsonObj["swing"];
     relayOnTime = jsonObj["velocity"];
     sequenceName = jsonObj["sequenceName"].as<String>();
+    isPaused = jsonObj["isPaused"].as<bool>();
 
     saveTimingToFile();
     request->send(200, "text/plain", "Timing settings updated successfully");

@@ -68,7 +68,7 @@ AsyncWebServer server(80);
 #define WIFI_SSID "C0R3SEQ32"
 #define WIFI_PASSWORD "12345678"
 
-const int SOLENOID_PINS[NUM_SOLENOIDS] = {2, 3, 4, 5, 6, 7, 8, 9};  // Pins connected to the solenoids
+const int SOLENOID_PINS[NUM_SOLENOIDS] = {2, -1, -1, -1, -1, -1, -1, -1};  // Pins connected to the solenoids
 int solenoid_lengths[NUM_SOLENOIDS];
 volatile uint8_t activePattern = 0;
 
@@ -180,9 +180,11 @@ void setupWebServer() {
 
 void setupSolenoids() {
     for (int i = 0; i < NUM_SOLENOIDS; i++) {
-        pinMode(SOLENOID_PINS[i], OUTPUT);
-        digitalWrite(SOLENOID_PINS[i], LOW);
-        solenoid_lengths[i] = -1;
+        if (SOLENOID_PINS[i] != -1) {
+            pinMode(SOLENOID_PINS[i], OUTPUT);
+            digitalWrite(SOLENOID_PINS[i], LOW);
+            solenoid_lengths[i] = -1;
+        }
     }
 }
 
@@ -209,11 +211,17 @@ void setupClock() {
 
 void setup() {
     Serial.begin(115200);
+    Serial.println("Setting up WiFi...");
     setupWiFi();
+    Serial.println("Setting up file system...");
     setupFileSystem();
+    Serial.println("Setting up web server...");
     setupWebServer();
+    Serial.println("Setting up solenoids...");
     setupSolenoids();
+    Serial.println("Setting up clock...");
     setupClock();
+    Serial.println("Setup complete");
 }
 
 void loop()

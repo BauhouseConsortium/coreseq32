@@ -68,7 +68,7 @@ AsyncWebServer server(80);
 #define WIFI_SSID "C0R3SEQ32"
 #define WIFI_PASSWORD "12345678"
 
-const int SOLENOID_PINS[NUM_SOLENOIDS] = {2, -1, -1, -1, -1, -1, -1, -1};  // Pins connected to the solenoids
+const int SOLENOID_PINS[NUM_SOLENOIDS] = {RELAY_PIN_1, -1, -1, -1, -1, -1, -1, -1};  // Pins connected to the solenoids
 int solenoid_lengths[NUM_SOLENOIDS];
 volatile uint8_t activePattern = 0;
 

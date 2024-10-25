@@ -11,6 +11,7 @@ C0R3SEQ32 is a powerful sequencer server implemented on the ESP32 platform. It o
 - Pattern storage in SPIFFS for persistence
 - Tempo control and swing timing via uClock integration
 
+![screenshot](screenshot.png)
 
 ## Install ESP32 Platform
 

@@ -10,6 +10,13 @@
    - Extract the contents of `ESP32FS-1.0.zip` into the `tools` directory.
    - Ensure the structure is correct: the path should look like `/Users/your-username/Documents/Arduino/tools/ESP32FS/tool/esp32fs.jar`.
 
+```sh
+/Users/manticore/Documents/Arduino/tools/
+└── ESP32FS
+    └── tool
+        └── esp32fs.jar
+```
+
 3. **Restart the Arduino IDE**:
    - Close and reopen the Arduino IDE to load the new tool.
 
@@ -18,12 +25,6 @@
    - Go to `Tools` in the menu bar.
    - You should see an option like `ESP32 Sketch Data Upload`. This indicates the tool is installed correctly.
 
-```sh
-/Users/manticore/Documents/Arduino/tools/
-└── ESP32FS
-    └── tool
-        └── esp32fs.jar
-```
 
 By following these steps, you should have the ESP32FS tool properly installed in your Arduino IDE on macOS.
 

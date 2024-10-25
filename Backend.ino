@@ -45,6 +45,7 @@ AsyncCallbackJsonWebHandler* setPatternHandler = new AsyncCallbackJsonWebHandler
     }
 
     savePatternToFile(patternIndex);
+    loadPatternData(activePattern);
 
     currentPattern = patternIndex;
     currentStep = 0; // Reset the current step to 0
@@ -239,6 +240,8 @@ void handleSetTiming(AsyncWebServerRequest *request)
     {
         baseStepDuration = doc["baseStepDuration"];
         uClock.setTempo(baseStepDuration);
+        uClock.stop();
+        uClock.start();
         updated = true;
     }
     if (doc.containsKey("swingAmount"))
@@ -414,6 +417,7 @@ AsyncCallbackJsonWebHandler* setSettingsHandler = new AsyncCallbackJsonWebHandle
     relayOnTime = jsonObj["velocity"];
     sequenceName = jsonObj["sequenceName"].as<String>();
     isPaused = jsonObj["isPaused"].as<bool>();
+    NOTE_LENGTH = relayOnTime;
 
     saveTimingToFile();
     request->send(200, "text/plain", "Timing settings updated successfully");
@@ -437,14 +441,121 @@ void notFound(AsyncWebServerRequest *request)
     request->send(404, "text/plain", "Not found");
 }
 
+void savePinSettingsToFile() {
+    File file = SPIFFS.open("/pin_settings.csv", "w");
+    if (!file) {
+        Serial.println("Failed to open pin_settings.csv for writing");
+        return;
+    }
+
+    // Write header
+    file.println("pin,active");
+
+    // Write pin assignments and active states
+    for (int i = 0; i < NUM_RELAYS; i++) {
+        file.printf("%d,%d\n", SOLENOID_PINS[i], relayActiveStates[i]);
+    }
+
+    file.close();
+    Serial.println("Pin settings saved to file");
+}
+
+void loadPinSettingsFromFile() {
+    File file = SPIFFS.open("/pin_settings.csv", "r");
+    if (!file) {
+        Serial.println("Failed to open pin_settings.csv for reading");
+        return;
+    }
+
+    // Skip header line
+    String header = file.readStringUntil('\n');
+
+    // Read pin assignments and active states
+    int relay = 0;
+    while (file.available() && relay < NUM_RELAYS) {
+        String line = file.readStringUntil('\n');
+        
+        // Parse CSV line
+        int commaIndex = line.indexOf(',');
+        if (commaIndex > 0) {
+            SOLENOID_PINS[relay] = line.substring(0, commaIndex).toInt();
+            relayActiveStates[relay] = line.substring(commaIndex + 1).toInt();
+        }
+        
+        relay++;
+    }
+
+    file.close();
+    Serial.println("Pin settings loaded from file");
+}
+
+
+
+AsyncCallbackJsonWebHandler* setPinHandler = new AsyncCallbackJsonWebHandler("/setPinSettings", [](AsyncWebServerRequest *request, JsonVariant &json) {
+    JsonObject jsonObj = json.as<JsonObject>();
+
+    if (!jsonObj.containsKey("pinSettings")) {
+        request->send(400, "text/plain", "Missing pinSettings parameter");
+        return;
+    }
+
+    JsonObject pinSettings = jsonObj["pinSettings"];
+    
+    if (!pinSettings.containsKey("pinAssignments") || !pinSettings.containsKey("relayActive")) {
+        request->send(400, "text/plain", "Missing pin assignments or relay active settings");
+        return;
+    }
+
+    JsonArray pinAssignments = pinSettings["pinAssignments"].as<JsonArray>();
+    JsonArray relayActive = pinSettings["relayActive"].as<JsonArray>();
+
+    if (pinAssignments.size() != NUM_RELAYS || relayActive.size() != NUM_RELAYS) {
+        String errorMsg = String("Received sizes: pin assignments=") + pinAssignments.size() + ", relay active=" + relayActive.size() + ", NUM_RELAYS=" + NUM_RELAYS;
+        request->send(400, "text/plain", errorMsg);
+        return;
+    }
+
+    // Update pin assignments and active states
+    for (int i = 0; i < NUM_RELAYS; i++) {
+        SOLENOID_PINS[i] = pinAssignments[i];
+        relayActiveStates[i] = relayActive[i].as<bool>() ? 1 : 0;
+    }
+
+    // Save settings to file
+    savePinSettingsToFile();
+
+    request->send(200, "text/plain", "Pin settings updated and saved successfully");
+});
+
+
+void handleGetPinSettings(AsyncWebServerRequest *request) {
+    StaticJsonDocument<512> doc;
+    JsonObject pinSettings = doc.createNestedObject("pinSettings");
+    
+    JsonArray pinAssignments = pinSettings.createNestedArray("pinAssignments");
+    JsonArray relayActive = pinSettings.createNestedArray("relayActive");
+
+    for (int i = 0; i < NUM_RELAYS; i++) {
+        pinAssignments.add(SOLENOID_PINS[i]);
+        relayActive.add(relayActiveStates[i] == 1);
+    }
+
+    String response;
+    serializeJson(doc, response);
+    request->send(200, "application/json", response);
+}
+
+
 
 void attachRoutes()
 {
     Serial.println("Router");
     server.addHandler(setPatternHandler);
     server.addHandler(setSettingsHandler);
+    server.addHandler(setPinHandler);
     server.on("/getSettings", HTTP_GET, handleGetSettings);
     server.on("/getPatterns", HTTP_GET, handleGetPatterns);
+    server.on("/getPinSettings", HTTP_GET, handleGetPinSettings);
     server.on("/triggerAllRelays", HTTP_POST, handleTriggerAllRelays);
     server.on("/pause", HTTP_POST, handlePause);
     server.on("/setTiming", HTTP_POST, handleSetTiming);

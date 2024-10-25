@@ -52,7 +52,7 @@ AsyncWebServer server(80);
 #define NUM_PATTERNS 3
 
 #define STEP_MAX_SIZE    16  // Number of steps in a pattern
-#define NOTE_LENGTH      12  // Adjust as needed
+// #define NOTE_LENGTH      12  // Adjust as needed
 #define NUM_SOLENOIDS    8   // Number of solenoids (relays)
 #define NUM_PATTERNS     3   // Number of patterns
 
@@ -68,7 +68,10 @@ AsyncWebServer server(80);
 #define WIFI_SSID "C0R3SEQ32"
 #define WIFI_PASSWORD "12345678"
 
-const int SOLENOID_PINS[NUM_SOLENOIDS] = {RELAY_PIN_1, -1, -1, -1, -1, -1, -1, -1};  // Pins connected to the solenoids
+int SOLENOID_PINS[NUM_SOLENOIDS] = {-1, -1, -1, -1, -1, -1, -1, -1};  // Pins connected to the solenoids
+int relayActiveStates[NUM_SOLENOIDS] = {0, 0, 0, 0, 0, 0, 0, 0};
+int NOTE_LENGTH = 12;
+
 int solenoid_lengths[NUM_SOLENOIDS];
 volatile uint8_t activePattern = 0;
 
@@ -168,6 +171,7 @@ void setupFileSystem() {
         loadPatternFromFile(i);
     }
     loadTimingFromFile();
+    loadPinSettingsFromFile();
 }
 
 void setupWebServer() {
@@ -180,10 +184,9 @@ void setupWebServer() {
 
 void setupSolenoids() {
     for (int i = 0; i < NUM_SOLENOIDS; i++) {
-        if (SOLENOID_PINS[i] != -1) {
+        if (SOLENOID_PINS[i] != -1 && relayActiveStates[i] == 1) {
             pinMode(SOLENOID_PINS[i], OUTPUT);
             digitalWrite(SOLENOID_PINS[i], LOW);
-            solenoid_lengths[i] = -1;
         }
     }
 }

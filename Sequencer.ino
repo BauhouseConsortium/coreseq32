@@ -74,8 +74,10 @@ void onStepCallback(uint32_t tick)
 
     for (int i = 0; i < NUM_SOLENOIDS; i++) {
       if (solenoidStates & (1 << i)) {
-        digitalWrite(SOLENOID_PINS[i], HIGH); // Turn on the solenoid
-        solenoid_lengths[i] = NOTE_LENGTH;    // Set the length the solenoid should stay on
+        if (relayActiveStates[i] == 1 && SOLENOID_PINS[i] != -1) {
+          digitalWrite(SOLENOID_PINS[i], HIGH); // Turn on the solenoid
+          solenoid_lengths[i] = NOTE_LENGTH;    // Set the length the solenoid should stay on
+        }
       }
     }
   }  
@@ -89,7 +91,9 @@ void onPPQNCallback(uint32_t tick)
     if (solenoid_lengths[i] > 0) {
       solenoid_lengths[i]--;
       if (solenoid_lengths[i] == 0) {
-        digitalWrite(SOLENOID_PINS[i], LOW); // Turn off the solenoid
+        if (relayActiveStates[i] == 1 && SOLENOID_PINS[i] != -1) {
+          digitalWrite(SOLENOID_PINS[i], LOW); // Turn off the solenoid
+        }
       }
     }
   }
@@ -106,8 +110,10 @@ void onClockStop()
 {
   // Ensure all solenoids are turned off
   for (int i = 0; i < NUM_SOLENOIDS; i++) {
-    digitalWrite(SOLENOID_PINS[i], LOW);
-    solenoid_lengths[i] = -1;
+    if (relayActiveStates[i] == 1 && SOLENOID_PINS[i] != -1) {
+      digitalWrite(SOLENOID_PINS[i], LOW);
+      solenoid_lengths[i] = -1;
+    }
   }
   _playing = false;
 }

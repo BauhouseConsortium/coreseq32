@@ -33,7 +33,7 @@ By following these steps, you should have the ESP32FS tool properly installed in
    - Select the ZIP files you want to install from `/Users/manticore/Documents/Arduino/C0R3SEQ32/libs/`.
    - The libraries will be added to your Arduino libraries.
 
-   For example, install the following libraries:
+   Install the following libraries:
    - `AsyncTCP-master.zip`
    - `ESPAsyncWebServer-master.zip`
    - `uClock-2.1.0.zip`

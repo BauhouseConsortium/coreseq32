@@ -239,9 +239,7 @@ void handleSetTiming(AsyncWebServerRequest *request)
     if (doc.containsKey("baseStepDuration"))
     {
         baseStepDuration = doc["baseStepDuration"];
-        uClock.setTempo(baseStepDuration);
-        uClock.stop();
-        uClock.start();
+        isBaseStepDurationUpdated = true;
         updated = true;
     }
     if (doc.containsKey("swingAmount"))
@@ -263,11 +261,7 @@ void handleSetTiming(AsyncWebServerRequest *request)
     {
         isPaused = doc["isPaused"].as<bool>();
         updated = true;
-        if (isPaused) {
-            uClock.stop();
-        } else {
-            uClock.start();
-        }
+        isPausedUpdated = true;
     }
 
     if (updated)

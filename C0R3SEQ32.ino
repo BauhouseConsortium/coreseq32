@@ -84,6 +84,8 @@ int solenoid_lengths[NUM_SOLENOIDS];
 volatile uint8_t activePattern = 0;
 
 int baseStepDuration = 120; // Base duration of each step in milliseconds
+bool isBaseStepDurationUpdated = false;
+
 int swingAmount = 30;       // Amount of swing in milliseconds
 int relayOnTime = 50;       // Duration the relay stays ON within each step
 String sequenceName = "Default";
@@ -101,7 +103,6 @@ const char *ssid = WIFI_SSID;
 const char *password = WIFI_PASSWORD;
 
 const byte RELAY_PINS[NUM_RELAYS] = {RELAY_PIN_1, RELAY_PIN_2, RELAY_PIN_3, RELAY_PIN_4, RELAY_PIN_5, RELAY_PIN_6, RELAY_PIN_7, RELAY_PIN_8, RELAY_PIN_9, RELAY_PIN_10, RELAY_PIN_11, RELAY_PIN_12, RELAY_PIN_13, RELAY_PIN_14, RELAY_PIN_15, RELAY_PIN_16};
-
 // Define multiple patterns for each relay (0 = OFF, 1 = ON)
 byte patterns[NUM_PATTERNS][NUM_RELAYS][NUM_STEPS] = {
     {
@@ -261,5 +262,8 @@ void setup() {
 
 void loop()
 {
-
+    if (isBaseStepDurationUpdated) {
+        uClock.setTempo(baseStepDuration);
+        isBaseStepDurationUpdated = false;
+    }
 }

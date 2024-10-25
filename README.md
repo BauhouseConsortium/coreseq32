@@ -1,5 +1,17 @@
 # C0R3SEQ32
 
+C0R3SEQ32 is a powerful sequencer server implemented on the ESP32 platform. It offers precise timing control for 8 relays, a web interface for pattern editing, and persistent storage of patterns.
+
+## Features
+
+- Controls 8 relays in sequenced patterns
+- Uses uClock for precise timing with 96 PPQN (Pulses Per Quarter Note) resolution
+- Web interface built with React and shadcn/ui for pattern editing
+- API for pattern manipulation
+- Pattern storage in SPIFFS for persistence
+- Tempo control and swing timing via uClock integration
+
+
 ## Install ESP32 Platform
 
 1. Open Arduino IDE

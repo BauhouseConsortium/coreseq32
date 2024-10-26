@@ -562,6 +562,19 @@ void savePlaylistToFile() {
             patternPlaylist[i].probability
         );
     }
+    // Check if any patterns are enabled
+    bool anyEnabled = false;
+    for (int i = 0; i < NUM_PATTERNS; i++) {
+        if (patternPlaylist[i].enabled) {
+            anyEnabled = true;
+            // If we find an enabled pattern and we're paused, unpause
+            if (isPaused) {
+                isPaused = false;
+                uClock.start();
+            }
+            break;
+        }
+    }
 
     file.close();
 }

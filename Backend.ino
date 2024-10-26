@@ -44,6 +44,23 @@ AsyncCallbackJsonWebHandler* setPatternHandler = new AsyncCallbackJsonWebHandler
         }
     }
 
+    // Handle track velocities if present
+    if (jsonObj.containsKey("trackVelocities")) {
+        JsonObject velocities = jsonObj["trackVelocities"].as<JsonObject>();
+        for (int relay = 0; relay < NUM_RELAYS; relay++) {
+            String relayStr = String(relay);
+            if (velocities.containsKey(relayStr)) {
+                int velocity = velocities[relayStr];
+                if (velocity < 0 || velocity > 127) {
+                    request->send(400, "text/plain", "Invalid velocity value for track " + relayStr);
+                    return;
+                }
+                patternPlaylist[patternIndex].trackVelocities[relay] = velocity;
+            }
+        }
+    }
+
+    saveVelocitiesToFile(patternIndex);
     savePatternToFile(patternIndex);
     loadPatternData(activePattern);
 
@@ -52,6 +69,73 @@ AsyncCallbackJsonWebHandler* setPatternHandler = new AsyncCallbackJsonWebHandler
     relayOn = false; // Ensure all relays are turned off
     request->send(200, "text/plain", "Pattern set successfully");
 });
+
+void saveVelocitiesToFile(int patternIndex) {
+    String filename = "/velocities_" + String(patternIndex) + ".csv";
+    File file = SPIFFS.open(filename, "w");
+    if (!file) {
+        Serial.println("Failed to open velocities file for writing");
+        return;
+    }
+
+    // Write velocities as CSV
+    for (int relay = 0; relay < NUM_RELAYS; relay++) {
+        file.print(patternPlaylist[patternIndex].trackVelocities[relay]);
+        if (relay < NUM_RELAYS - 1) {
+            file.print(",");
+        }
+    }
+    file.println();
+
+    file.close();
+    Serial.println("Velocities saved successfully to CSV");
+}
+
+void loadVelocitiesFromFile(int patternIndex) {
+    String filename = "/velocities_" + String(patternIndex) + ".csv";
+    
+    if (!SPIFFS.exists(filename)) {
+        Serial.println("Velocities file doesn't exist, using defaults");
+        // Set default velocity of 10 for all tracks
+        for (int relay = 0; relay < NUM_RELAYS; relay++) {
+            patternPlaylist[patternIndex].trackVelocities[relay] = 10;
+        }
+        return;
+    }
+
+    File file = SPIFFS.open(filename, "r");
+    if (!file) {
+        Serial.println("Failed to open velocities file for reading");
+        return;
+    }
+
+    String line = file.readStringUntil('\n');
+    int index = 0;
+    int lastCommaIndex = 0;
+    int nextCommaIndex = line.indexOf(',');
+
+    // Parse CSV values
+    while (nextCommaIndex != -1 && index < NUM_RELAYS - 1) {
+        String valueStr = line.substring(lastCommaIndex, nextCommaIndex);
+        patternPlaylist[patternIndex].trackVelocities[index] = valueStr.toInt();
+        
+        lastCommaIndex = nextCommaIndex + 1;
+        nextCommaIndex = line.indexOf(',', lastCommaIndex);
+        index++;
+    }
+
+    // Handle last value
+    if (index < NUM_RELAYS) {
+        String valueStr = line.substring(lastCommaIndex);
+        patternPlaylist[patternIndex].trackVelocities[index] = valueStr.toInt();
+    }
+
+    file.close();
+    Serial.println("Velocities loaded successfully from CSV");
+}
+
+
+
 
 void handleGetPatterns(AsyncWebServerRequest *request)
 {
@@ -63,6 +147,7 @@ void handleGetPatterns(AsyncWebServerRequest *request)
         JsonObject pattern = patternsArray.createNestedObject();
         pattern["patternIndex"] = i;
         JsonArray patternData = pattern.createNestedArray("patternData");
+        JsonArray velocityData = pattern.createNestedArray("trackVelocities");
 
         for (int relay = 0; relay < NUM_RELAYS; relay++)
         {
@@ -71,6 +156,7 @@ void handleGetPatterns(AsyncWebServerRequest *request)
             {
                 relayData.add(patterns[i][relay][step]);
             }
+            velocityData.add(patternPlaylist[i].trackVelocities[relay]);
         }
     }
 

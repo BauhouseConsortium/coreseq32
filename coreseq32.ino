@@ -115,6 +115,7 @@ struct PatternPlaylistEntry {
     bool enabled;
     int order;
     int probability;
+    int trackVelocities[NUM_RELAYS] = {10}; // Default to 10%
 };
 
 // Global pattern playlist variables
@@ -131,7 +132,7 @@ void setNumPatternPlaylist(int newNumPatternX) {
 
     // Initialize new entries to default values
     for (int i = 0; i < newNumPatternX; i++) {
-        newPatternPlaylist[i] = {i, false, 0, 0};
+        newPatternPlaylist[i] = {i, false, 0, 0, {10}};
     }
 
     // Copy existing entries if any
@@ -228,6 +229,9 @@ void setupFileSystem() {
     loadPinSettingsFromFile();
     loadPlaylistFromFile();
     loadRandomMode();
+    for (int i = 0; i < NUM_PATTERNS; i++) {
+        loadVelocitiesFromFile(i);
+    }
 }
 
 void setupWebServer() {

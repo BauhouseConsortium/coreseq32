@@ -135,7 +135,7 @@ void onStepCallback(uint32_t tick)
       if (solenoidStates & (1 << i)) {
         if (relayActiveStates[i] == 1 && SOLENOID_PINS[i] != -1 && !isPaused) {
           digitalWrite(SOLENOID_PINS[i], HIGH); // Turn on the solenoid
-          solenoid_lengths[i] = NOTE_LENGTH;    // Set the length the solenoid should stay on
+          solenoid_lengths[i] = patternPlaylist[activePattern].trackVelocities[i];    // Set the length based on step velocity
         }
       }
     }

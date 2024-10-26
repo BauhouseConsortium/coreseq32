@@ -12,6 +12,7 @@ C0R3SEQ32 is a powerful sequencer server implemented on the ESP32 platform. It o
 - Tempo control and swing timing via uClock integration
 
 ![screenshot](screenshot.png)
+
 ## Installation Instructions
 
 ### 1. Set Up ESP32 Development Environment
@@ -62,3 +63,22 @@ Alternatively, download and install manually:
 2. Select your ESP32 board: `Tools` > `Board` > `ESP32`
 3. Verify ESP32FS tool appears: `Tools` > `ESP32 Sketch Data Upload`
 4. Try compiling the sketch - all required libraries should be found
+
+### 5. Upload Sketch and Web Interface
+
+1. Open the C0R3SEQ32 sketch in Arduino IDE
+2. Select the appropriate serial port for your ESP32 under `Tools` > `Port`
+3. Click the Upload button to compile and upload the sketch to your ESP32
+4. Once the sketch is uploaded successfully, go to `Tools` > `ESP32 Sketch Data Upload`
+   - This will upload the web interface files to the ESP32's SPIFFS
+5. Open the Serial Monitor (`Tools` > `Serial Monitor`) to view debug output and the assigned IP address
+6. Enter the IP address in a web browser to access the C0R3SEQ32 web interface
+
+## Usage
+
+- Access the web interface by entering the ESP32's IP address in a web browser
+- Use the pattern editor to create and modify sequencer patterns
+- Adjust tempo and swing settings via the web interface controls
+- Patterns are automatically saved to the ESP32's SPIFFS and will persist across power cycles
+
+For more detailed usage instructions and API documentation, please refer to the project's GitHub repository.

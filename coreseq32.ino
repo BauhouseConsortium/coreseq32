@@ -99,6 +99,7 @@ int currentRelay = 0;
 bool isPaused = false;
 bool isPausedUpdated = false;
 bool isPatternLocked = false; // Flag to indicate if pattern is locked
+bool randomMode = false;
 
 const char *ssid = WIFI_SSID;
 const char *password = WIFI_PASSWORD;
@@ -107,6 +108,45 @@ const byte RELAY_PINS[NUM_RELAYS] = {RELAY_PIN_1, RELAY_PIN_2, RELAY_PIN_3, RELA
 
 // Dynamic pattern array
 byte (*patterns)[NUM_RELAYS][NUM_STEPS] = nullptr;
+
+// Define the pattern playlist structure
+struct PatternPlaylistEntry {
+    int patternIndex;
+    bool enabled;
+    int order;
+    int probability;
+};
+
+// Global pattern playlist variables
+PatternPlaylistEntry* patternPlaylist = nullptr;
+
+void setNumPatternPlaylist(int newNumPatternX) {
+    // Allocate new memory for pattern playlist
+    PatternPlaylistEntry* newPatternPlaylist = (PatternPlaylistEntry*)malloc(newNumPatternX * sizeof(PatternPlaylistEntry));
+    
+    if (newPatternPlaylist == nullptr) {
+        Serial.println("Pattern playlist memory allocation failed!");
+        return;
+    }
+
+    // Initialize new entries to default values
+    for (int i = 0; i < newNumPatternX; i++) {
+        newPatternPlaylist[i] = {i, false, 0, 0};
+    }
+
+    // Copy existing entries if any
+    if (patternPlaylist != nullptr) {
+        int entriesToCopy = min(NUM_PATTERNS, newNumPatternX);
+        for (int i = 0; i < entriesToCopy; i++) {
+            newPatternPlaylist[i] = patternPlaylist[i];
+        }
+        free(patternPlaylist);
+    }
+
+    // Update global variables
+    patternPlaylist = newPatternPlaylist;
+}
+
 
 void setNumPatterns(int newNumPatterns) {
     // Allocate new memory for patterns
@@ -186,6 +226,8 @@ void setupFileSystem() {
     }
     loadTimingFromFile();
     loadPinSettingsFromFile();
+    loadPlaylistFromFile();
+    loadRandomMode();
 }
 
 void setupWebServer() {
@@ -232,6 +274,8 @@ void setup() {
     setupWiFi();
     Serial.println("Setting up patterns...");
     setNumPatterns(8);
+    Serial.println("Setting up pattern playlist...");
+    setNumPatternPlaylist(8);
     Serial.println("Setting up file system...");
     setupFileSystem();
     Serial.println("Setting up web server...");

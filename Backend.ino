@@ -543,6 +543,166 @@ void handleGetPinSettings(AsyncWebServerRequest *request) {
 }
 
 
+void savePlaylistToFile() {
+    File file = SPIFFS.open("/pattern_playlist.csv", FILE_WRITE);
+    if (!file) {
+        Serial.println("Failed to open pattern_playlist.csv for writing");
+        return;
+    }
+
+    // Write header
+    file.println("patternIndex,enabled,order,probability");
+
+    // Write each pattern entry
+    for (int i = 0; i < NUM_PATTERNS; i++) {
+        file.printf("%d,%d,%d,%d\n", 
+            patternPlaylist[i].patternIndex,
+            patternPlaylist[i].enabled ? 1 : 0,
+            patternPlaylist[i].order,
+            patternPlaylist[i].probability
+        );
+    }
+
+    file.close();
+}
+
+void loadPlaylistFromFile() {
+    File file = SPIFFS.open("/pattern_playlist.csv", "r");
+    if (!file) {
+        Serial.println("Creating default pattern_playlist.csv");
+        
+        // Create file with default values
+        File newFile = SPIFFS.open("/pattern_playlist.csv", FILE_WRITE);
+        if (newFile) {
+            // Write header
+            newFile.println("patternIndex,enabled,order,probability");
+            
+            // Write default values - each pattern enabled with sequential order
+            for (int i = 0; i < NUM_PATTERNS; i++) {
+                newFile.printf("%d,1,%d,100\n", i, i);
+                
+                // Set default values in memory
+                patternPlaylist[i].patternIndex = i;
+                patternPlaylist[i].enabled = true;
+                patternPlaylist[i].order = i;
+                patternPlaylist[i].probability = 100;
+            }
+            newFile.close();
+            Serial.println("Default pattern playlist created");
+        } else {
+            Serial.println("Failed to create pattern_playlist.csv");
+        }
+        return;
+    }
+
+    // Skip header line
+    file.readStringUntil('\n');
+
+    // Read each pattern entry
+    for (int i = 0; i < NUM_PATTERNS; i++) {
+        String line = file.readStringUntil('\n');
+        
+        // Parse CSV line
+        int commaIndex1 = line.indexOf(',');
+        int commaIndex2 = line.indexOf(',', commaIndex1 + 1);
+        int commaIndex3 = line.indexOf(',', commaIndex2 + 1);
+
+        if (commaIndex1 != -1 && commaIndex2 != -1 && commaIndex3 != -1) {
+            patternPlaylist[i].patternIndex = line.substring(0, commaIndex1).toInt();
+            patternPlaylist[i].enabled = line.substring(commaIndex1 + 1, commaIndex2).toInt() == 1;
+            patternPlaylist[i].order = line.substring(commaIndex2 + 1, commaIndex3).toInt();
+            patternPlaylist[i].probability = line.substring(commaIndex3 + 1).toInt();
+        }
+    }
+
+    file.close();
+    Serial.println("Pattern playlist loaded successfully");
+}
+
+void saveRandomModeToFile() {
+    File file = SPIFFS.open("/random_mode.txt", FILE_WRITE);
+    if (file) {
+        file.print(randomMode ? "1" : "0");
+        file.close();
+        Serial.println("Random mode saved successfully");
+    } else {
+        Serial.println("Failed to save random mode");
+    }
+}
+
+void loadRandomMode() {
+    if (!SPIFFS.exists("/random_mode.txt")) {
+        Serial.println("Creating default random_mode.txt");
+        randomMode = false;
+        saveRandomModeToFile();
+        return;
+    }
+
+    File file = SPIFFS.open("/random_mode.txt", FILE_READ);
+    if (file) {
+        String content = file.readString();
+        randomMode = (content == "1");
+        file.close();
+        Serial.println("Random mode loaded successfully");
+    } else {
+        Serial.println("Failed to load random mode");
+        randomMode = false;
+    }
+}
+
+
+AsyncCallbackJsonWebHandler* setPlaylistHandler = new AsyncCallbackJsonWebHandler("/savePatternPlaylist", [](AsyncWebServerRequest *request, JsonVariant &json) {
+    JsonObject jsonObj = json.as<JsonObject>();
+    
+    if (!jsonObj.containsKey("patternPlaylist")) {
+        request->send(400, "text/plain", "Missing pattern playlist");
+        return;
+    }
+
+    JsonArray playlist = jsonObj["patternPlaylist"].as<JsonArray>();
+    
+    if (playlist.size() != NUM_PATTERNS) {
+        String errorMsg = String("Invalid playlist size. Expected: ") + NUM_PATTERNS + ", Received: " + playlist.size();
+        request->send(400, "text/plain", errorMsg);
+        return;
+    }
+
+    // Update pattern playlist settings
+    for (int i = 0; i < NUM_PATTERNS; i++) {
+        JsonObject entry = playlist[i];
+        patternPlaylist[i].patternIndex = entry["patternIndex"];
+        patternPlaylist[i].enabled = entry["enabled"];
+        patternPlaylist[i].order = entry["order"];
+        patternPlaylist[i].probability = entry["probability"];
+    }
+
+    // Update random mode setting
+    randomMode = jsonObj["randomMode"];
+
+    // Save settings to file
+    savePlaylistToFile();
+    saveRandomModeToFile();
+    request->send(200, "text/plain", "Pattern playlist updated and saved successfully");
+});
+
+void handleGetPlaylist(AsyncWebServerRequest *request) {
+    DynamicJsonDocument doc(1024);
+    JsonArray playlist = doc.createNestedArray("patternPlaylist");
+
+    for (int i = 0; i < NUM_PATTERNS; i++) {
+        JsonObject entry = playlist.createNestedObject();
+        entry["patternIndex"] = patternPlaylist[i].patternIndex;
+        entry["enabled"] = patternPlaylist[i].enabled;
+        entry["order"] = patternPlaylist[i].order;
+        entry["probability"] = patternPlaylist[i].probability;
+    }
+
+    doc["randomMode"] = randomMode;
+
+    String response;
+    serializeJson(doc, response);
+    request->send(200, "application/json", response);
+}
 
 void attachRoutes()
 {
@@ -550,6 +710,8 @@ void attachRoutes()
     server.addHandler(setPatternHandler);
     server.addHandler(setSettingsHandler);
     server.addHandler(setPinHandler);
+    server.addHandler(setPlaylistHandler);
+    server.on("/getPatternPlaylist", HTTP_GET, handleGetPlaylist);
     server.on("/getSettings", HTTP_GET, handleGetSettings);
     server.on("/getPatterns", HTTP_GET, handleGetPatterns);
     server.on("/getPinSettings", HTTP_GET, handleGetPinSettings);

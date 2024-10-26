@@ -49,12 +49,12 @@
 AsyncWebServer server(80);
 #define NUM_RELAYS 16
 #define NUM_STEPS 16
-#define NUM_PATTERNS 3
+const int num_patterns_init = 5;
+int NUM_PATTERNS = num_patterns_init;
 
 #define STEP_MAX_SIZE    16  // Number of steps in a pattern
 // #define NOTE_LENGTH      12  // Adjust as needed
 #define NUM_SOLENOIDS    16   // Number of solenoids (relays)
-#define NUM_PATTERNS     3   // Number of patterns
 
 #define RELAY_PIN_1 14
 #define RELAY_PIN_2 11
@@ -104,65 +104,45 @@ const char *ssid = WIFI_SSID;
 const char *password = WIFI_PASSWORD;
 
 const byte RELAY_PINS[NUM_RELAYS] = {RELAY_PIN_1, RELAY_PIN_2, RELAY_PIN_3, RELAY_PIN_4, RELAY_PIN_5, RELAY_PIN_6, RELAY_PIN_7, RELAY_PIN_8, RELAY_PIN_9, RELAY_PIN_10, RELAY_PIN_11, RELAY_PIN_12, RELAY_PIN_13, RELAY_PIN_14, RELAY_PIN_15, RELAY_PIN_16};
-// Define multiple patterns for each relay (0 = OFF, 1 = ON)
-byte patterns[NUM_PATTERNS][NUM_RELAYS][NUM_STEPS] = {
-    {
-        // Pattern 1
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY1 pattern
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY2 pattern
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY3 pattern
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY4 pattern
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY5 pattern
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY6 pattern
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY7 pattern
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY8 pattern
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY9 pattern
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY10 pattern
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY11 pattern
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY12 pattern
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY13 pattern
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY14 pattern
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY15 pattern
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}  // RELAY16 pattern
-    },
-    {
-        // Pattern 2
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY1 pattern
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY2 pattern
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY3 pattern
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY4 pattern
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY5 pattern
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY6 pattern
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY7 pattern
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY8 pattern
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY9 pattern
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY10 pattern
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY11 pattern
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY12 pattern
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY13 pattern
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY14 pattern
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY15 pattern
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}  // RELAY16 pattern
-    },
-    {
-        // Pattern 3
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY1 pattern
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY2 pattern
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY3 pattern
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY4 pattern
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY5 pattern
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY6 pattern
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY7 pattern
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY8 pattern
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY9 pattern
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY10 pattern
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY11 pattern
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY12 pattern
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY13 pattern
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY14 pattern
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // RELAY15 pattern
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}  // RELAY16 pattern
-    }};
+
+// Dynamic pattern array
+byte (*patterns)[NUM_RELAYS][NUM_STEPS] = nullptr;
+
+void setNumPatterns(int newNumPatterns) {
+    // Allocate new memory for patterns
+    byte (*newPatterns)[NUM_RELAYS][NUM_STEPS] = (byte(*)[NUM_RELAYS][NUM_STEPS])malloc(newNumPatterns * sizeof(byte[NUM_RELAYS][NUM_STEPS]));
+    
+    if (newPatterns == nullptr) {
+        Serial.println("Memory allocation failed!");
+        return;
+    }
+
+    // Initialize new patterns to 0
+    for (int p = 0; p < newNumPatterns; p++) {
+        for (int r = 0; r < NUM_RELAYS; r++) {
+            for (int s = 0; s < NUM_STEPS; s++) {
+                newPatterns[p][r][s] = 0;
+            }
+        }
+    }
+
+    // Copy existing patterns if any
+    if (patterns != nullptr) {
+        int patternsToCopy = min(NUM_PATTERNS, newNumPatterns);
+        for (int p = 0; p < patternsToCopy; p++) {
+            for (int r = 0; r < NUM_RELAYS; r++) {
+                for (int s = 0; s < NUM_STEPS; s++) {
+                    newPatterns[p][r][s] = patterns[p][r][s];
+                }
+            }
+        }
+        free(patterns);
+    }
+
+    // Update global variables
+    patterns = newPatterns;
+    NUM_PATTERNS = newNumPatterns;
+}
 
 void setupWiFi() {
     // Scan for existing networks
@@ -250,6 +230,8 @@ void setup() {
     Serial.begin(115200);
     Serial.println("Setting up WiFi...");
     setupWiFi();
+    Serial.println("Setting up patterns...");
+    setNumPatterns(8);
     Serial.println("Setting up file system...");
     setupFileSystem();
     Serial.println("Setting up web server...");

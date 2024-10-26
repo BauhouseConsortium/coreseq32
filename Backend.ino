@@ -180,6 +180,7 @@ void loadTimingFromFile()
             relayOnTime = defaultRelayOnTime;
             sequenceName = defaultSequenceName;
             isPaused = defaultIsPaused;
+            NOTE_LENGTH = relayOnTime;
 
             Serial.println("Default timing parameters created");
         } else {
@@ -206,6 +207,7 @@ void loadTimingFromFile()
         sequenceName = line.substring(commaIndex3 + 1);
         sequenceName.trim(); // Remove any trailing whitespace
         isPaused = line.substring(commaIndex4 + 1).toInt();
+        NOTE_LENGTH = relayOnTime;
         Serial.println("Timing parameters loaded successfully");
     }
     else
@@ -407,6 +409,7 @@ AsyncCallbackJsonWebHandler* setSettingsHandler = new AsyncCallbackJsonWebHandle
     }
 
     baseStepDuration = jsonObj["tempo"];
+    isBaseStepDurationUpdated = true;
     swingAmount = jsonObj["swing"];
     relayOnTime = jsonObj["velocity"];
     sequenceName = jsonObj["sequenceName"].as<String>();

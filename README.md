@@ -72,7 +72,7 @@ Alternatively, download and install manually:
 4. Once the sketch is uploaded successfully, go to `Tools` > `ESP32 Sketch Data Upload`
    - This will upload the web interface files to the ESP32's SPIFFS
 5. Open the Serial Monitor (`Tools` > `Serial Monitor`) to view debug output and the assigned IP address
-6. Enter the IP address in a web browser to access the C0R3SEQ32 web interface
+6. Enter the IP address in a web browser to access the C0R3SEQ32 web interface (default is http://192.168.4.1/static)
 
 ## Usage
 

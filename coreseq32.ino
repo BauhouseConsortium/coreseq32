@@ -97,6 +97,7 @@ unsigned long relayStartTime = 0;
 bool relayOn = false;
 int currentRelay = 0;
 bool isPaused = false;
+bool isPausedUpdated = false;
 bool isPatternLocked = false; // Flag to indicate if pattern is locked
 
 const char *ssid = WIFI_SSID;
